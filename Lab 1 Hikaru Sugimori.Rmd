@@ -1,0 +1,171 @@
+---
+title: "R Markdown Demo"
+author: "BUSN 32100"
+date: "Oct 5 2019"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+In this demo we continue to work with the starwars data 
+
+##Packages
+We start with loading the packages we'll use.
+```{r load-packages, message=FALSE ,warning=F}
+
+#1
+#a)
+library(tidyverse)
+state.df = data.frame(state.x77, Region=state.region, Division=state.division)
+summary(state.df)
+state.df$Abbr<-state.abb
+print(state.df[1:3,1:11])
+#b)
+print(state.df[1:3,-c(9)])
+#Region gone!!
+#c)
+state.df$Center.x<-state.center$x
+state.df$Center.y<-state.center$y
+print(state.df[1:3,1:12])
+#d)
+longless <- state.df[state.df$Center.x < -100,]  
+longless.data<- data.frame(longless)
+#e
+longless9 <- data_frame(state.df$Center.x < -100 & state.df$Murder > 9)
+which(longless9==TRUE)
+#[1]  2  5 28 31
+#these four states meet the -100 longitude +9% murder rate criteria
+badstates<-which(longless9==TRUE)
+state.df$Life.Exp[badstates]
+# 69.31 71.71 69.03 70.32
+#State #5 has the highest life expectancy. 
+
+
+```
+
+First, let's try to `knit` this R Markdown file to a html file. Click on the `knit` button on top. It should open a html page.
+
+In class, we have seen these two plots. Now each member of your group can choose one block and modified the code with in that block to show a plot with only two genders, male and female. You can also choose between `knit to html` or `knit to pdf`. Compare your knitted html/pdf with your other member of your group. Let us know if you encounter any error.
+
+===========
+```{r}
+rio = read.csv("https://raw.githubusercontent.com/BUSN32100/data_files/master/rio.csv")
+#2a. What kind of object is rio? What are its dimensions and columns names of rio? What does each row represent? Is there any missing data?
+summary(rio)
+#Looks like rio includes information on all the athletes participating in the Rio olymipics.
+typeof(rio)
+dim(rio)
+#[1] 11538    12
+#each row is an individual athlete. 
+is.null(rio)
+#FALSE, looks like there is no missing data. 
+#2.b) 
+#11,538 athlets competed in the olympics
+class(rio$nationality) 
+levels(rio$nationality) 
+summary(rio$nationality)
+#The US has the most athletes at 567
+summary(rio$sex)
+#female   male 
+#  5205   6333 
+subset.Male <- rio[rio$sex == 'male',] 
+#Brazil has the most male athlets at 269 
+summary(subset.Male$nationality)
+subset.Female <- rio[rio$sex == 'female',] 
+#US has the most female athlets at 303. 
+summary(subset.Female$nationality)
+
+#Challenge)
+summary(rio$name)
+sum(summary(rio$name) > 1) 
+#22 people share the same name 
+
+#2c) 
+sum(rio$gold)
+#[1] 666
+sum(rio$silver)
+# [1] 655
+sum(rio$bronze)
+# [1] 704
+666+655+704
+#[1] 2025
+#Surpirsingly, there were different amounts of each medal awarded. I did my research and apparently this is because if there is a tie for gold, no silver is awarded. 
+rio <- data.frame (rio, total = rio$gold + rio$silver + rio$bronze)
+max(rio$total) #The athlete with most medals got 6 (Michael Phelps) 
+rio[rio$total == 6,]
+```
+
+2. Segmented bar plots, proportions
+===========
+```{R}
+#3a)
+install.packages("ggplot2")
+library("ggplot2")
+ggplot(data=rio, mapping=aes(x=total))+geom_histogram(color = 'red', fill='white')
+#b)
+rio2 <- data.frame(rio, age = 2016 - rio$year_of_birth)
+max(rio2$age)
+#[1] 62
+rio[rio2$age == 62,] 
+#Julie Brougham from New Zealand and Mary Hanna from Australia are the oldest. 
+min(rio2$age) #min age is 14
+rio[rio2$age == 14,] #there are 8 14 year olds,  7 female and 1 male, all participated in aquatics
+ggplot(data=rio2, mapping=aes(x=age, fill=sex))+geom_histogram(bindwidth=10)  
+rio3 <- rio2[rio2$gold>0,]
+max(rio3$age)
+#[1] 59, The max age is 59, Nick Skelton from Great Britain
+min(rio3$age)
+#[1] 15 Minimum age is 15, Qian Ren from China
+ggplot(data=rio3, mapping=aes(x=age, fill=sex))+geom_histogram(bindwidth=10) 
+#Looks like the athletes who won a medal tend to be younger 
+summary(rio3)
+#Gold medalists are on average 26.97 years old 
+#I think age is not much of a factor
+summary(rio)
+#I'm noticing that a disporportionate number of Americans win the gold medal. 
+#d)
+ggplot(data=rio2, mapping = aes(x=age))+geom_histogram()+facet_wrap(.~sport)
+range(rio2[rio2$sport=='golf',]$age)
+#[1] 18 47 pretty big age range 
+range(rio2[rio2$sport=='gymnastics',]$age)
+#[1] 16 41, slightly narrower range than golf
+range(rio2[rio2$sport=='rowing',]$age)
+#[1] 18 57, more older people
+#Makes sense since rowing isn't as physically taxing as gymnastics
+
+#e)
+ggplot(data=rio, mapping=aes(y=height, x=sport))+geom_boxplot() +theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(data=rio, mapping=aes(y=weight, x=sport))+geom_boxplot() +theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+#f) 
+ggplot(data=rio, mapping=aes(x=height, y=weight, color=sex))+geom_point(alpha = 0.1) + facet_wrap(.~sport)
+
+#Challenge) 
+counts <- summary(rio$nationality)
+counts <- as.data.frame (counts)
+Country <- row.names(counts)
+
+counts <- data.frame("total_athlets"=counts,Country)
+
+colnames(counts)[1] <- "total_athlets"
+
+ggplot(data=counts[1:50,], mapping=aes(x=total_athlets, y=Country))+geom_point()
+
+```
+
+
+3. Segmented counts/proportions plots
+===========
+
+```
+
+4. Knit to PDF
+=========
+To be able to knit PDF file from Rmarkdown. Try run the following lines. You will see a warning message saying two error messages will be displayed. Acknowledge it. After two error messages and a long installation process, you should have the ability to generate PDF from Rmarkdown files.
+**You may want to do this after the class today, you will need the Rstudio to complete the group lab**
+
+To check if you have install successfully. Run these lines in your console. You should see an output of 
+`[1] "test.pdf"` and a `test.pdf` now in your folder.
+
+```{r}
